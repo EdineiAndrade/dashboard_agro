@@ -6,38 +6,37 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 // Registrar os componentes necessários para o gráfico
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+interface Post {
+  Unidade: string;
+  Meta: string;
+  Realizado: string | number;
+}
 
-interface Dados { 
-  id: number; 
-  name: string; 
-  price: number}
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+  }[];
+}
 
 const Page = () => {
-  const [chartDataCrescer, setChartDataCrescer] = useState<any>(null);
-  const [chartDataMais, setChartDataMais] = useState<any>(null);
+  const [chartDataCrescer, setChartDataCrescer] = useState<ChartData | null>(null);
+  const [chartDataMais, setChartDataMais] = useState<ChartData | null>(null);
 
   // Função para preparar os dados do gráfico
-  const prepareChartData = (posts: any ) => {
-    const unidades = posts.map((post: any) => post.Unidade);
+  const prepareChartData = (posts: Post[]): ChartData => {
+    const unidades = posts.map((post) => post.Unidade);
 
-    const metas = posts.map((post: any) => {
-      return parseFloat(post.Meta.replace("R$", "").replace(".", "").replace(",", "."));
-    });
+    const metas = posts.map((post) => parseFloat(post.Meta.replace("R$", "").replace(".", "").replace(",", ".")));
 
-    const realizados = posts.map((post:any) => {
-      const realizado = post.Realizado;
-
-      // Verifique se o valor é uma string ou número
-      let realizadoStr = "";
-
-      if (typeof realizado === 'string') {
-        realizadoStr = realizado.replace("R$", "").replace(".", "").replace(",", ".");
-      } else if (typeof realizado === 'number') {
-        realizadoStr = String(realizado);
-      }
-
+    const realizados = posts.map((post) => {
+      let realizadoStr = typeof post.Realizado === 'string' ? post.Realizado : String(post.Realizado);
+      realizadoStr = realizadoStr.replace("R$", "").replace(".", "").replace(",", ".");
       const realizadoNumber = parseFloat(realizadoStr);
-
       return isNaN(realizadoNumber) ? 0 : realizadoNumber; // Garantir que valores inválidos sejam convertidos para 0
     });
 
@@ -69,8 +68,8 @@ const Page = () => {
         const response = await fetch('https://script.googleusercontent.com/macros/echo?user_content_key=tkPCnC_YXOFX-IaSAoz4f8C012gx1ck4DyFazeE2pBWlu_iEUUKAX8N2_8pEVQZsavOwsyICL76dczTv15sZ30gVD4KbgtU2m5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnJCSsHEc82faAX75HlSzVjUec-PVBX6OkeXoeeH6U9av_bNt-6mXa9Wn2UG2rlZ7Dgt5jrym9GghJ4xWIzJcYcPn-AG5LQkQ99z9Jw9Md8uu&lib=MK6NyOb3f-PeHa0mtkFPonUKwDD2Rz00K');
         const data = await response.json();
         
-        const postsCrescer = data.crescer || [];
-        const postsMais = data.mais || [];
+        const postsCrescer: Post[] = data.crescer || [];
+        const postsMais: Post[] = data.mais || [];
         
         // Preparando os dados para os gráficos de "Crescer" e "Mais"
         const chartDataCrescerPrepared = prepareChartData(postsCrescer);
